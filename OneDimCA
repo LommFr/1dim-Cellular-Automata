@@ -1,0 +1,125 @@
+import java.util.*;
+
+//@author: Franz Lommatzsch
+
+public class OneDimCA {
+	
+	// the number of cells
+	static int size;
+	
+	// the number of displayed generations
+	static int iterations;
+	
+	//the number of the displayed rule
+	static String rule;
+	
+	//enable/disable circular boundaries
+	static boolean boundaries;
+	
+	static int[][] result;
+	
+	public static void main(String[] args) {
+		
+		Scanner sc = new Scanner(System.in);
+		
+		System.out.println("Please enter a integer representing the number of cells in your automaton:");
+		size = sc.nextInt();
+		
+		System.out.println("Please enter a integer representing the number of iterations:");
+		iterations = sc.nextInt();		
+		
+		System.out.println("Please enter a integer between 0 and 255 to term your rule:");
+		int r = sc.nextInt();
+		//convert rule number to binary string
+		rule = Integer.toBinaryString(r);
+				
+		//add leading zeros
+		while(rule.length() < 8) {
+			rule = "0" + rule;
+		}
+		System.out.println("RULE: " + rule);
+		
+		System.out.println("If circular boundaries required, enter true. Else false:");
+		boundaries = sc.nextBoolean();
+		
+		System.out.println(printAutomaton(buildAutomaton(size, iterations, rule, boundaries)));
+		
+		sc.close();
+		
+	}
+	
+	//calculates the automaton for given values
+	static int[][] buildAutomaton(int s, int it, String r, boolean b) {
+		
+		result = new int[it+1][s];
+		
+		result[0][s/2] = 1;
+		
+		for(int iteration = 1; iteration<=it; iteration++) {
+			for(int cell=0; cell<s; cell++) {
+				result[iteration][cell] = calculate(iteration, cell);
+			}
+		}
+		
+		return result;
+	}
+	
+	//converts automaton to String
+	static String printAutomaton(int[][] automaton) {
+		
+		String s = "";
+		
+		for(int i = 0; i<automaton.length; i++) {		
+			
+			
+			for (int j=0; j<automaton[0].length; j++) {
+				
+				if(automaton[i][j] == 0) {
+					s += "\u25A1";
+				} else {
+					s+= "\u25A0";
+				}
+				 
+				if(j != automaton[0].length) {
+					s += " ";
+				}
+			}
+			
+			if(i != automaton.length-1) {
+				s += "\n";
+			} 
+		}
+		
+		return s;
+	}
+	
+	//update the cell c of the i-th iteration
+	static int calculate(int i, int c) {
+		
+		// two indices needed for circular boundaries
+		int leftIndex = (c == 0) ? size-1 : c-1;		
+		int rightIndex = (c == size-1) ? 0 : c+1;
+		
+		// if there are no circular boundaries, every cell next to the left or right border stays zero		
+		if(boundaries == false) {
+			if(c == 0 || c == result[0].length) {
+				return 0;
+			}
+		}
+		
+		// if there are circular boundaries we might mind the boarder cells 
+		
+		// get the actual tree-cell-neighbourhood
+		String s = String.valueOf(result[i-1][leftIndex]);
+		s += String.valueOf(result[i-1][c]);
+		s += String.valueOf(result[i-1][rightIndex]);
+		
+		//apply given rule
+		int index = Integer.valueOf(s, 2);
+		if(rule.charAt(7-index) == '1') {
+			return 1;
+		}
+		
+		return 0;
+	}
+}
